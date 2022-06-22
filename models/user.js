@@ -2,6 +2,7 @@
 const {
   Model
 } = require('sequelize');
+const { hashPassword } = require('../helpers');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     /**
@@ -11,18 +12,67 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      User.belongsToMany(models.Price, {
+        through: "Transaction",
+        foreignKey: "UserId",
+      });
+      User.hasMany(models.Transaction, { foreignKey: "UserId" });
     }
   }
   User.init({
-    username: DataTypes.STRING,
-    email: DataTypes.STRING,
-    password: DataTypes.STRING,
-    role: DataTypes.STRING,
+    username: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: {
+          args: true,
+          msg: "Username is Required"
+        },
+        notEmpty: {
+          args: true,
+          msg: "Username is Required"
+        }
+      }
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        notNull: {
+          args: true,
+          msg: "E-mail is Required"
+        },
+        notEmpty: {
+          args: true,
+          msg: "E-mail is Required"
+        }
+      }
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: {
+          args: true,
+          msg: "Password is Required"
+        },
+        notEmpty: {
+          args: true,
+          msg: "Password is Required"
+        }
+      }
+    },
     phoneNumber: DataTypes.STRING,
     address: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'User',
+    hooks: {
+      beforeCreate(instance) {
+        instance.password = hashPassword(instance.password, 10)
+      }
+    }
   });
   return User;
 };
